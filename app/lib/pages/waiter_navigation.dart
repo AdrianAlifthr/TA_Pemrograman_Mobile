@@ -13,12 +13,12 @@ class WaiterNavigation extends StatefulWidget {
 
 class _WaiterNavigationState extends State<WaiterNavigation> {
   int _selectedIndex = 0;
-  
+
   // Halaman untuk Waiters: Dashboard, Meja, Order Menu
   final List<Widget> _screens = [
     const DashboardScreen(role: "Waiter"),
     const TableLayoutScreen(),
-    const WaiterOrderScreen(), 
+    const WaiterOrderScreen(),
   ];
 
   @override
@@ -31,19 +31,19 @@ class _WaiterNavigationState extends State<WaiterNavigation> {
         backgroundColor: AppColors.primary,
         indicatorColor: Colors.white24,
 
-        height: 70,
+        height: 80,
 
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.home, color: Colors.white), 
+            icon: Icon(Icons.home, color: Colors.white),
             label: 'Home',
           ),
           NavigationDestination(
-            icon: Icon(Icons.table_restaurant, color: Colors.white), 
+            icon: Icon(Icons.table_restaurant, color: Colors.white),
             label: 'Meja',
           ),
           NavigationDestination(
-            icon: Icon(Icons.receipt_long, color: Colors.white), 
+            icon: Icon(Icons.receipt_long, color: Colors.white),
             label: 'Order',
           ),
         ],
