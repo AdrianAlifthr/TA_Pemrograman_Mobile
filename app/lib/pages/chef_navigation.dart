@@ -30,24 +30,25 @@ class _ChefNavigationState extends State<ChefNavigation> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: (idx) => setState(() => _selectedIndex = idx),
-        backgroundColor: AppColors.accentGreen, // Sedikit beda warna biar ketahuan bedanya
+        backgroundColor:
+            AppColors.accentGreen, // Sedikit beda warna biar ketahuan bedanya
         indicatorColor: Colors.white24,
         height: 70,
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.home, color: Colors.white), 
+            icon: Icon(Icons.home, color: Colors.white),
             label: 'Home',
           ),
           NavigationDestination(
-            icon: Icon(Icons.table_restaurant, color: Colors.white), 
+            icon: Icon(Icons.table_restaurant, color: Colors.white),
             label: 'Meja',
           ),
           NavigationDestination(
-            icon: Icon(Icons.soup_kitchen, color: Colors.white), 
+            icon: Icon(Icons.soup_kitchen, color: Colors.white),
             label: 'Kitchen',
           ),
           NavigationDestination(
-            icon: Icon(Icons.menu_book, color: Colors.white), 
+            icon: Icon(Icons.menu_book, color: Colors.white),
             label: 'Menu',
           ),
         ],

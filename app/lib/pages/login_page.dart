@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/api_config.dart';
 import 'package:flutter_application_1/main.dart';
 import 'package:http/http.dart' as http;
 
@@ -19,51 +20,74 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(30.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text(
-                "POS SYSTEM",
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primary,
-                ),
-              ),
-              const SizedBox(height: 50),
-              // Form Login Sederhana
-              _buildTextField(Icons.person, "Username", _usernameController),
-              const SizedBox(height: 20),
-              _buildTextField(
-                Icons.lock,
-                "Password",
-                _passwordController,
-                isObscure: true,
-              ),
-              const SizedBox(height: 40),
-              const SizedBox(height: 10),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 15),
+      body: Container(
+        decoration: BoxDecoration(color: Color(0xFFE6EABD)),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(30.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: const Text(
+                    "Resto Management",
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
+                    ),
                   ),
-                  onPressed: () {
-                    login();
-                  },
-                  child: const Text("Login"),
                 ),
-              ),
-              SizedBox(height: 20),
-              Text(_msg),
-            ],
+                const SizedBox(height: 50),
+                // Form Login Sederhana
+                _buildLabel("Username"),
+                _buildTextField(
+                  Icons.person,
+                  "Enter your username",
+                  _usernameController,
+                ),
+                const SizedBox(height: 20),
+                _buildLabel("Password"),
+                _buildTextField(
+                  Icons.lock,
+                  "Enter your password",
+                  _passwordController,
+                  isObscure: true,
+                ),
+                const SizedBox(height: 35),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                    ),
+                    onPressed: () {
+                      login();
+                    },
+                    child: const Text("Login"),
+                  ),
+                ),
+                SizedBox(height: 20),
+                Center(
+                  child: Text(_msg, style: TextStyle(color: Colors.red)),
+                ),
+              ],
+            ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Text(
+        text,
+        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
       ),
     );
   }
@@ -89,7 +113,7 @@ class _LoginScreenState extends State<LoginScreen> {
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
-            vertical: 14,
+            vertical: 18,
           ),
         ),
       ),
@@ -97,7 +121,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void login() async {
-    String url = "http://192.168.18.19/API_restaurant_app/login.php";
+    String url = ApiConfig.login;
 
     final Map<String, dynamic> queryParams = {
       "username": _usernameController.text,
