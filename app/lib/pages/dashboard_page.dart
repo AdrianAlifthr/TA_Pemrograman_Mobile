@@ -17,12 +17,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int totalTables = 0;
   int bookedTables = 0;
   int activeOrders = 0;
+  List<Map<String, dynamic>> tables = [];
 
   @override
   void initState() {
     super.initState();
     fetchTableStatus();
     fetchActiveOrders();
+    fetchTables();
   }
 
   Future<void> fetchTableStatus() async {
@@ -47,6 +49,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
       setState(() {
         activeOrders = data["active_orders"];
       });
+    }
+  }
+
+  Future<void> fetchTables() async {
+    try {
+      final url = Uri.parse(ApiConfig.tablesStatus);
+      final res = await http.get(url);
+      if (res.statusCode == 200) {
+        final jsonBody = jsonDecode(res.body);
+        if (jsonBody['success'] == true) {
+          setState(() {
+            tables = List<Map<String, dynamic>>.from(jsonBody['tables']);
+          });
+        }
+      } else {
+        // error handling ringan
+        debugPrint('API error: ${res.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Fetch error: $e');
     }
   }
 
@@ -94,21 +116,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   mainAxisSpacing: 10,
                   crossAxisSpacing: 10,
                 ),
-                itemCount: 10,
+                itemCount: tables.length, // gunakan jumlah dari API
                 itemBuilder: (context, index) {
+                  // data meja dari API
+                  final table = tables[index];
+                  final status =
+                      table['status']; // pastikan huruf sama seperti API
+                  final tableId = table['table_id'];
+
+                  // pilih icon status
+                  String iconPath = "assets/images/meja-hijau.png";
+                  if (status == "BOOKED") {
+                    iconPath = "assets/images/meja-merah.png";
+                  } else if (status == "CLEANING") {
+                    iconPath = "assets/images/meja-kuning.png";
+                  }
+
                   return Container(
                     decoration: BoxDecoration(
                       color: AppColors.cardWhite,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     alignment: Alignment.centerRight,
-                    padding: EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(20),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Image.asset("assets/images/meja-hijau.png"),
+                        Image.asset(iconPath, width: 40),
+                        const SizedBox(width: 20),
                         Text(
-                          "Meja ${index + 1}",
+                          "Meja $tableId",
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ],
@@ -116,6 +153,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   );
                 },
               ),
+
               const SizedBox(height: 25),
               const Text(
                 "Order Masuk",

@@ -4,4 +4,5 @@ class ApiConfig {
   static String countTables = "$baseUrl/count_table_available.php";
   static String login = "$baseUrl/login.php";
   static String activeOrder = "$baseUrl/active_orders.php";
+  static String tablesStatus = "$baseUrl/tables_status.php";
 }
