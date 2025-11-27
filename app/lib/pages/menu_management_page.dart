@@ -41,7 +41,7 @@ class _ChefMenuManagementScreenState extends State<ChefMenuManagementScreen> {
               child: Row(
                 children: [
                   const Icon(Icons.search),
-                  const SizedBox(width: 10, height: 12,),
+                  const SizedBox(width: 10,),
                   Expanded(
                     child: TextField(
                       controller: searchController,
