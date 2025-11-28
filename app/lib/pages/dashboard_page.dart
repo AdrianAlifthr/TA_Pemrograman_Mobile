@@ -1,8 +1,8 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/api_config.dart';
 import 'package:flutter_application_1/main.dart';
+import 'package:flutter_application_1/widgets/show_status_dialog.dart';
 import 'package:http/http.dart' as http;
 
 class DashboardScreen extends StatefulWidget {
@@ -13,11 +13,27 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
+Color statusColor(String s) {
+  switch (s.toUpperCase()) {
+    case "COOKING":
+      return Colors.red;
+    case "WAITING":
+      return Colors.orange;
+    case "READY":
+      return Colors.green;
+    case "SERVED":
+      return Colors.blue;
+    default:
+      return Colors.grey;
+  }
+}
+
 class _DashboardScreenState extends State<DashboardScreen> {
   int totalTables = 0;
   int bookedTables = 0;
   int activeOrders = 0;
   List<Map<String, dynamic>> tables = [];
+  List<Map<String, dynamic>> orderList = [];
 
   @override
   void initState() {
@@ -25,6 +41,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     fetchTableStatus();
     fetchActiveOrders();
     fetchTables();
+    fetchOrderList();
   }
 
   Future<void> fetchTableStatus() async {
@@ -72,6 +89,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
+  Future<void> updateTableStatus(String tableId, String newStatus) async {
+    final response = await http.post(
+      Uri.parse(ApiConfig.updateTableStatus),
+      body: {"table_id": tableId, "status": newStatus},
+    );
+
+    if (response.statusCode == 200) {
+      debugPrint("Update berhasil");
+      fetchTables();
+      fetchTableStatus();
+    } else {
+      debugPrint("Gagal update");
+    }
+  }
+
+  Future<void> fetchOrderList() async {
+    final url = Uri.parse(ApiConfig.orderList);
+    final res = await http.get(url);
+
+    if (res.statusCode == 200) {
+      final body = jsonDecode(res.body);
+
+      if (body["success"] == true) {
+        setState(() {
+          orderList = List<Map<String, dynamic>>.from(body["orders"]);
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -102,9 +149,62 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ],
               ),
               const SizedBox(height: 25),
-              const Text(
-                "Status Meja",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    "Status Meja",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  Row(
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 10,
+                            height: 10,
+                            decoration: BoxDecoration(
+                              color: Color(0xFF893942),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          SizedBox(width: 5),
+                          Text('Booked'),
+                        ],
+                      ),
+                      SizedBox(width: 5),
+                      Row(
+                        children: [
+                          Container(
+                            width: 10,
+                            height: 10,
+                            decoration: BoxDecoration(
+                              color: Color(0xFFB9AE36),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          SizedBox(width: 5),
+                          Text('Cleaning'),
+                        ],
+                      ),
+                      SizedBox(width: 5),
+                      Row(
+                        children: [
+                          Container(
+                            width: 10,
+                            height: 10,
+                            decoration: BoxDecoration(
+                              color: Color(0xFF7EB936),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          SizedBox(width: 5),
+                          Text('Available'),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
               ),
               const SizedBox(height: 10),
               GridView.builder(
@@ -116,39 +216,49 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   mainAxisSpacing: 10,
                   crossAxisSpacing: 10,
                 ),
-                itemCount: tables.length, // gunakan jumlah dari API
+                itemCount: tables.length,
                 itemBuilder: (context, index) {
-                  // data meja dari API
                   final table = tables[index];
-                  final status =
-                      table['status']; // pastikan huruf sama seperti API
-                  final tableId = table['table_id'];
+                  final status = table['status'];
 
-                  // pilih icon status
-                  String iconPath = "assets/images/meja-hijau.png";
+                  String iconPath = "assets/images/meja-available.png";
                   if (status == "BOOKED") {
-                    iconPath = "assets/images/meja-merah.png";
+                    iconPath = "assets/images/meja-booked.png";
                   } else if (status == "CLEANING") {
-                    iconPath = "assets/images/meja-kuning.png";
+                    iconPath = "assets/images/meja-cleaning.png";
                   }
 
-                  return Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.cardWhite,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    alignment: Alignment.centerRight,
-                    padding: const EdgeInsets.all(20),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Image.asset(iconPath, width: 40),
-                        const SizedBox(width: 20),
-                        Text(
-                          "Meja $tableId",
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ],
+                  return GestureDetector(
+                    onTap: () {
+                      showStatusDialog(
+                        context: context,
+                        table: tables[index],
+                        tableNumber: index + 1,
+                        onUpdate: (newStatus) {
+                          updateTableStatus(
+                            tables[index]['table_id'],
+                            newStatus,
+                          );
+                          Navigator.pop(context);
+                        },
+                      );
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.cardWhite,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.all(20),
+                      child: Row(
+                        children: [
+                          Image.asset(iconPath, width: 40),
+                          SizedBox(width: 10),
+                          Text(
+                            "Meja ${index + 1}",
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 },
@@ -160,9 +270,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
-              _orderListTile("Meja 2", "2 Burger, 2 Soda", "Baru", Colors.red),
-              _orderListTile("Meja 6", "1 Pasta", "Diproses", Colors.orange),
-              _orderListTile("Meja 3", "Family Set", "Siap", Colors.green),
+              Column(
+                children: orderList.map((o) {
+                  return _orderListTile(
+                    "Meja ${o['table_number']}", // T_10 → Meja 10
+                    o['menu_list'], // Beef x1, Pasta x2
+                    o['order_status'], // cooking / waiting / ready
+                    statusColor(o['order_status']),
+                  );
+                }).toList(),
+              ),
             ],
           ),
         ),

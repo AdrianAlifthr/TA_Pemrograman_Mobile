@@ -7,8 +7,8 @@ include "connection-pdo.php";
 $username = $_GET['username'] ?? '';
 $password = $_GET['password'] ?? '';
 
-$sql = "SELECT user_id, username, role 
-        FROM user_data_login
+$sql = "SELECT user_id, username, role, full_name 
+        FROM users
         WHERE BINARY username = :username 
         AND BINARY password = :password";
 

@@ -28,7 +28,7 @@ class _WaiterNavigationState extends State<WaiterNavigation> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: (idx) => setState(() => _selectedIndex = idx),
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.accentGreen,
         indicatorColor: Colors.white24,
 
         height: 80,
