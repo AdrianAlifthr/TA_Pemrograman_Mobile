@@ -34,7 +34,7 @@ class _MyAppState extends State<MyApp> {
         '/chefNavigation': (context) => const ChefNavigation(),
         '/waiterNavigation': (context) => const WaiterNavigation(),
       },
-      home: ChefNavigation(),
+      home: WaiterNavigation(),
     );
   }
 }
