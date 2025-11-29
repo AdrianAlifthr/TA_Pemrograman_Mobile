@@ -80,6 +80,10 @@ class _TableLayoutScreenState extends State<TableLayoutScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFE6EABD),
+      appBar: AppBar(
+        title: const Text("Table Layout"),
+        backgroundColor: Colors.transparent,
+      ),
       body: SafeArea(
         child: Column(
           children: [

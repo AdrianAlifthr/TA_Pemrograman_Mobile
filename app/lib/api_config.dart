@@ -8,4 +8,8 @@ class ApiConfig {
   static String updateTableStatus = "$baseUrl/update_table_status.php";
   static String orderList = "$baseUrl/order_list.php";
   static String tablesView = "$baseUrl/tables_view_status.php";
+  static String menuList = "$baseUrl/menu_list.php";
+  static String menuUpdate = "$baseUrl/menu_update_available.php";
+  static String menuListWaiter = "$baseUrl/menu_list.php";
+  static String createOrder = "$baseUrl/create_order.php";
 }
