@@ -7,4 +7,5 @@ class ApiConfig {
   static String tablesStatus = "$baseUrl/tables_status.php";
   static String updateTableStatus = "$baseUrl/update_table_status.php";
   static String orderList = "$baseUrl/order_list.php";
+  static String tablesView = "$baseUrl/tables_view_status.php";
 }

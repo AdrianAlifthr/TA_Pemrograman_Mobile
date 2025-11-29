@@ -81,7 +81,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           });
         }
       } else {
-        // error handling ringan
         debugPrint('API error: ${res.statusCode}');
       }
     } catch (e) {
