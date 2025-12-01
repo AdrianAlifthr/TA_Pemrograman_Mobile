@@ -124,6 +124,54 @@ class _DashboardScreenState extends State<DashboardScreen> {
       appBar: AppBar(
         title: Text("Dashboard ${widget.role}"),
         backgroundColor: Color(0xFFE6EABD),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout_rounded),
+            color: Colors.red,
+            onPressed: () {
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) => AlertDialog(
+                  backgroundColor: AppColors.cardWhite,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  title: const Center(child: Text("Konfirmasi")),
+                  content: const Text(
+                    "Apakah kamu yakin ingin keluar?",
+                    textAlign: TextAlign.center,
+                  ),
+                  actionsAlignment: MainAxisAlignment.spaceEvenly,
+                  actions: [
+                    OutlinedButton(
+                      child: const Text(
+                        "Batal",
+                        style: TextStyle(color: Colors.black),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                    ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                      ),
+                      child: const Text(
+                        "Keluar",
+                        style: TextStyle(color: AppColors.cardWhite),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.pushReplacementNamed(context, "/login");
+                      },
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: Container(
         decoration: BoxDecoration(color: Color(0xFFE6EABD)),

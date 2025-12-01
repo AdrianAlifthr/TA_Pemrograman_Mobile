@@ -6,7 +6,7 @@ include "connection-pdo.php";
 
     try {
         $sql = "
-            SELECT TABLE_ID, STATUS 
+            SELECT TABLE_ID, STATUS
             FROM `tables`
             ORDER BY CAST(SUBSTRING(TABLE_ID, 3) AS UNSIGNED)
         ";
@@ -19,7 +19,7 @@ include "connection-pdo.php";
             if ($s === 'BOOKED') return 'meja-booked.png';
             if ($s === 'CLEANING') return 'meja-cleaning.png';
             if ($s === 'AVAILABLE') return 'meja-available.png';
-            return 'meja_hijau.png'; // fallback
+            return 'meja_hijau.png';
         }
 
         $data = [];

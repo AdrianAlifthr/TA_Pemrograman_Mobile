@@ -14,17 +14,17 @@
         orders.order_status,
 
         GROUP_CONCAT(
-            CONCAT(menu_items.menu_name, ' x', order_items.quantity)
+            CONCAT(menu_categories.menu_name, ' x', order_items.quantity)
             SEPARATOR ', '
         ) AS menu_list
 
     FROM orders
     JOIN order_items 
         ON orders.order_id = order_items.order_id
-    JOIN menu_items 
-        ON order_items.menu_id = menu_items.menu_id
+    JOIN menu_categories 
+        ON order_items.menu_item_id = menu_categories.menu_id
 
-    WHERE orders.order_status IN ('WAITING', 'COOKING', 'READY', 'SERVED')
+    WHERE orders.order_status IN ('waiting', 'cooking', 'ready', 'served')
 
     GROUP BY orders.order_id
     ORDER BY orders.order_created_date DESC

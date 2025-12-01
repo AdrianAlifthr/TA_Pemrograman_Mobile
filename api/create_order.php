@@ -5,6 +5,12 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: Content-Type");
 
 include "connection-pdo.php";
+
+/**
+ * -------------------------------------------------
+ * INPUT JSON / FORM DATA
+ * -------------------------------------------------
+ */
 $raw   = file_get_contents("php://input");
 $data  = json_decode($raw, true) ?? [];
 
@@ -15,6 +21,12 @@ $payment_method  = $data['payment_method']?? ($_POST['payment_method'] ?? 'CASH'
 if (is_string($items)) {
     $items = json_decode($items, true);
 }
+
+/**
+ * -------------------------------------------------
+ * VALIDASI
+ * -------------------------------------------------
+ */
 if (!$table_id || !is_array($items) || count($items) == 0) {
     echo json_encode([
         "success"=>false,
@@ -22,6 +34,16 @@ if (!$table_id || !is_array($items) || count($items) == 0) {
     ]);
     exit;
 }
+
+/**
+ * -------------------------------------------------
+ * NORMALIZE TABLE ID
+ * -------------------------------------------------
+ * input:
+ *  1        → T_1
+ *  Meja 1   → T_1
+ *  T_1      → T_1
+ */
 preg_match('/(\d+)/', $table_id, $match);
 $tableNum = $match[1] ?? null;
 
@@ -34,9 +56,21 @@ if (!$tableNum) {
 }
 
 $table_id = "T_" . $tableNum;
+
+/**
+ * -------------------------------------------------
+ * PROCESS ORDER
+ * -------------------------------------------------
+ */
 try {
 
     $conn->beginTransaction();
+
+    /**
+     * ---------------------------------------------
+     * GET MENU PRICES
+     * ---------------------------------------------
+     */
     $menuIds = array_map(fn($i)=>$i['menu_id'], $items);
     $in = implode(',', array_fill(0,count($menuIds),'?'));
 
@@ -49,6 +83,12 @@ try {
     if (!$priceMap) {
         throw new Exception("Menu not found");
     }
+
+    /**
+     * ---------------------------------------------
+     * CALCULATE TOTAL
+     * ---------------------------------------------
+     */
     $total = 0;
 
     foreach ($items as $row){
@@ -65,6 +105,12 @@ try {
 
         $total += ($price * $qty);
     }
+
+    /**
+     * ---------------------------------------------
+     * INSERT ORDERS
+     * ---------------------------------------------
+     */
     $orderId  = "O_" . uniqid();
     $created  = date("Y-m-d H:i:s");
     $status   = "waiting";
@@ -84,6 +130,14 @@ try {
         ':total'   => $total,
         ':created' => $created
     ]);
+
+
+
+    /**
+     * ---------------------------------------------
+     * INSERT ORDER ITEMS (ANTI DUPLICATE)
+     * ---------------------------------------------
+     */
     $sqlItem = "
         INSERT INTO order_items
         (ORDER_ITEMS_ID, order_id, menu_item_id, quantity, unit_price, status)
@@ -106,6 +160,7 @@ try {
             $unit = intval(implode('', $m[0]));
         }
 
+        // ✅ SAFE UNIQUE ITEM ID
         $oi_id = "OI_{$orderId}_{$counter}";
         $counter++;
 
@@ -119,7 +174,18 @@ try {
         ]);
     }
 
+    /**
+     * ---------------------------------------------
+     * COMMIT
+     * ---------------------------------------------
+     */
     $conn->commit();
+
+    /**
+     * ---------------------------------------------
+     * SUCCESS RESPONSE
+     * ---------------------------------------------
+     */
     echo json_encode([
         "success" => true,
         "order_id"=> $orderId,
