@@ -123,7 +123,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFE6EABD),
       appBar: AppBar(
-        title: Text("Dashboard ${widget.role} test"),
+        title: Text("Dashboard ${widget.role}"),
         backgroundColor: Color(0xFFE6EABD),
         actions: [
           IconButton(

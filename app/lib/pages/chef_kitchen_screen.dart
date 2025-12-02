@@ -65,8 +65,8 @@ class _ChefKitchenScreenState extends State<ChefKitchenScreen> {
     Color headerColor = status == 'ready'
         ? Colors.green
         : status == 'cooking'
-        ? Colors.orange
-        : AppColors.primary;
+        ? Colors.red
+        : AppColors.accentOrange;
 
     String timeText = "IN";
 
@@ -136,7 +136,10 @@ class _ChefKitchenScreenState extends State<ChefKitchenScreen> {
                                   "cooking",
                                 )
                               : null,
-                          child: const Text("Cooking"),
+                          child: const Text(
+                            "Cooking",
+                            style: TextStyle(color: Colors.black87),
+                          ),
                         ),
                       ),
 
