@@ -12,4 +12,6 @@ class ApiConfig {
   static String menuUpdate = "$baseUrl/menu_update_available.php";
   static String menuListWaiter = "$baseUrl/menu_list.php";
   static String createOrder = "$baseUrl/create_order.php";
+  static String kitchenTaks = "$baseUrl/kitchen_taks.php";
+  static String updateKitchen = "$baseUrl/update_kitchen_status.php";
 }

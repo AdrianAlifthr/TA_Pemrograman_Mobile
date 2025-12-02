@@ -1,5 +1,8 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/main.dart';
+import 'package:flutter_application_1/api_config.dart';
+import 'package:http/http.dart' as http;
 
 class ChefKitchenScreen extends StatefulWidget {
   const ChefKitchenScreen({super.key});
@@ -9,132 +12,155 @@ class ChefKitchenScreen extends StatefulWidget {
 }
 
 class _ChefKitchenScreenState extends State<ChefKitchenScreen> {
-  
-  List<Map<String, dynamic>> kitchenData = [
-    {
-      "title": "Meja 2",
-      "time": "15:45 min",
-      "items": ["2x Burger (No Onion)", "1x Soda"],
-      "status": 0
-    },
-    {
-      "title": "Meja 6",
-      "time": "05:20 min",
-      "items": ["2x Burger", "1x Soda"],
-      "status": 0
-    },
-    {
-      "title": "Meja 3",
-      "time": "20:00 min",
-      "items": ["2x Burger", "1x Soda"],
-      "status": 2
-    },
-  ];
+  List kitchenData = [];
+
+  @override
+  void initState() {
+    super.initState();
+    fetchKitchen();
+  }
+
+  Future fetchKitchen() async {
+    final res = await http.get(Uri.parse(ApiConfig.kitchenTaks));
+    final json = jsonDecode(res.body);
+
+    if (json["success"]) {
+      setState(() {
+        kitchenData = json["data"];
+      });
+    }
+  }
+
+  Future updateStatus(String task, String status) async {
+    await http.post(
+      Uri.parse(ApiConfig.updateKitchen),
+      body: {"task_number": task, "status": status},
+    );
+
+    fetchKitchen();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Kitchen System"), backgroundColor: Colors.transparent),
+      appBar: AppBar(
+        title: const Text("Kitchen Tasks"),
+        backgroundColor: Colors.transparent,
+      ),
       backgroundColor: const Color(0xFFE6EABD),
       body: ListView(
         padding: const EdgeInsets.all(20),
-        children: [
-          for (var data in kitchenData)
-            _kitchenCard(data),
-        ],
+        children: [for (var data in kitchenData) _kitchenCard(data)],
       ),
     );
   }
 
-  Widget _kitchenCard(Map<String, dynamic> data) {
-    int status = data["status"];
+  Widget _kitchenCard(Map data) {
+    String meja = (data["TABLE_ID"] ?? "T_?").toString().replaceAll("T_", "");
 
-    Color headerColor =
-        status == 2 ? AppColors.primary : (status == 1 ? AppColors.accentRed : AppColors.primary.withOpacity(0.8));
+    String status = data['KITCHEN_STATUS'];
 
-    String timeText = status == 2 ? "Done" : data["time"];
+    List items = data["ITEMS"].split(", ");
+
+    Color headerColor = status == 'ready'
+        ? Colors.green
+        : status == 'cooking'
+        ? Colors.orange
+        : AppColors.primary;
+
+    String timeText = "IN";
+
+    if (status == 'waiting') {
+      timeText = data["ORDER_CREATED_DATE"];
+    } else if (status == 'cooking') {
+      timeText = "Start: ${data["STARTED_AT"]}";
+    } else if (status == 'ready') {
+      timeText = "DONE";
+    }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
       ),
       child: Column(
         children: [
-          
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
             decoration: BoxDecoration(
               color: headerColor,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(12),
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(data["title"], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(8)),
-                  child: Text(timeText, style: const TextStyle(color: Colors.white)),
+                Text(
+                  "Meja $meja",
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
+                Text(timeText, style: const TextStyle(color: Colors.white)),
               ],
             ),
           ),
 
-          
           Padding(
             padding: const EdgeInsets.all(15),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ...data["items"].map<Widget>((e) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                ...items.map(
+                  (e) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [Text(e)],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                if (status != 'ready')
+                  Row(
                     children: [
-                      Text(e, style: const TextStyle(fontWeight: FontWeight.w500)),
-                      const Text("Extra Ice", style: TextStyle(fontSize: 10, color: Colors.grey)),
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: status == "waiting"
+                              ? () => updateStatus(
+                                  data["TASK_NUMBER"].toString(),
+                                  "cooking",
+                                )
+                              : null,
+                          child: const Text("Cooking"),
+                        ),
+                      ),
+
+                      const SizedBox(width: 10),
+
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: status == "cooking"
+                              ? () => updateStatus(
+                                  data["TASK_NUMBER"].toString(),
+                                  "ready",
+                                )
+                              : null,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                          ),
+                          child: const Text(
+                            "Ready",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
-                )),
-
-                const SizedBox(height: 15),
-
-                Row(
-                  children: [
-                    
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () {
-                          setState(() {
-                            data["status"] = 1; 
-                          });
-                        },
-                        child: const Text("Cooking"),
-                      ),
-                    ),
-
-                    const SizedBox(width: 10),
-
-                    
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          setState(() {
-                            data["status"] = 2;
-                          });
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                        ),
-                        child: const Text("Ready"),
-                      ),
-                    ),
-                  ],
-                ),
               ],
             ),
           ),
