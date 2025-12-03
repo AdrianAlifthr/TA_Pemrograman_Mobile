@@ -325,12 +325,25 @@ class _WaiterOrderScreenState extends State<WaiterOrderScreen> {
 
   Future<void> createOrderAndPay(int tableNumber, String paymentMethod) async {
     if (cart.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Cart kosong')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Keranjang masih kosong'),
+          backgroundColor: Colors.red,
+        ),
+      );
       return;
     }
-    // build items
+
+    if (tableNumber <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Masukkan nomor meja yang valid'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     final items = cart.values
         .map((c) => {'menu_id': c.menu.id, 'quantity': c.qty})
         .toList();
@@ -349,25 +362,73 @@ class _WaiterOrderScreenState extends State<WaiterOrderScreen> {
       );
 
       final body = json.decode(res.body);
+
       if (body['success'] == true) {
-        // clear cart
         setState(() => cart.clear());
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Order created: ${body['order_id']}')),
-        );
-      } else {
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              'Gagal: ${body['message'] ?? body['error'] ?? 'unknown'}',
+            content: Center(
+              child: Text(
+                '✅ Order meja $tableNumber berhasil dibuat',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(12),
+            duration: const Duration(seconds: 3),
           ),
         );
+        return;
       }
+      final errorMessage =
+          body['message'] ?? body['error'] ?? 'Terjadi kesalahan pada server';
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '❌ Pesanan gagal dibuat',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 4),
+              Text(errorMessage),
+            ],
+          ),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(12),
+          duration: const Duration(seconds: 4),
+        ),
+      );
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '❌ Pesanan gagal dibuat',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 4),
+              Text(e.toString()),
+            ],
+          ),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(12),
+          duration: const Duration(seconds: 4),
+        ),
+      );
     }
   }
 
