@@ -174,162 +174,123 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
-      body: Container(
-        decoration: BoxDecoration(color: Color(0xFFE6EABD)),
-        child: SingleChildScrollView(
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await fetchTableStatus();
+          await fetchActiveOrders();
+          await fetchTables();
+          await fetchOrderList();
+        },
+        child: ListView(
           padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Selamat Bekerja, ${widget.role}",
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
+          children: [
+            Text(
+              "Selamat Bekerja, ${widget.role}",
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
               ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  _statCard("Meja Terisi", "$bookedTables/$totalTables"),
-                  const SizedBox(width: 15),
-                  _statCard("Orderan Aktif", "$activeOrders"),
-                ],
-              ),
-              const SizedBox(height: 25),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    "Status Meja",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  Row(
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 10,
-                            height: 10,
-                            decoration: BoxDecoration(
-                              color: Color(0xFF893942),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          SizedBox(width: 5),
-                          Text('Booked'),
-                        ],
-                      ),
-                      SizedBox(width: 5),
-                      Row(
-                        children: [
-                          Container(
-                            width: 10,
-                            height: 10,
-                            decoration: BoxDecoration(
-                              color: Color(0xFFB9AE36),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          SizedBox(width: 5),
-                          Text('Cleaning'),
-                        ],
-                      ),
-                      SizedBox(width: 5),
-                      Row(
-                        children: [
-                          Container(
-                            width: 10,
-                            height: 10,
-                            decoration: BoxDecoration(
-                              color: Color(0xFF7EB936),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          SizedBox(width: 5),
-                          Text('Available'),
-                        ],
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 2.5,
-                  mainAxisSpacing: 10,
-                  crossAxisSpacing: 10,
-                ),
-                itemCount: tables.length,
-                itemBuilder: (context, index) {
-                  final table = tables[index];
-                  final status = table['status'];
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                _statCard("Meja Terisi", "$bookedTables/$totalTables"),
+                const SizedBox(width: 15),
+                _statCard("Orderan Aktif", "$activeOrders"),
+              ],
+            ),
+            const SizedBox(height: 25),
 
-                  String iconPath = "assets/images/meja-available.png";
-                  if (status == "BOOKED") {
-                    iconPath = "assets/images/meja-booked.png";
-                  } else if (status == "CLEANING") {
-                    iconPath = "assets/images/meja-cleaning.png";
-                  }
+            // ---- Status Meja ----
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  "Status Meja",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                Row(
+                  children: [
+                    _legend(Color(0xFF893942), "Booked"),
+                    _legend(Color(0xFFB9AE36), "Cleaning"),
+                    _legend(Color(0xFF7EB936), "Available"),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
 
-                  return GestureDetector(
-                    onTap: () {
-                      showStatusDialog(
-                        context: context,
-                        table: tables[index],
-                        tableNumber: index + 1,
-                        onUpdate: (newStatus) {
-                          updateTableStatus(
-                            tables[index]['table_id'],
-                            newStatus,
-                          );
-                          Navigator.pop(context);
-                        },
-                      );
-                    },
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.cardWhite,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      padding: const EdgeInsets.all(20),
-                      child: Row(
-                        children: [
-                          Image.asset(iconPath, width: 40),
-                          SizedBox(width: 10),
-                          Text(
-                            "Meja ${index + 1}",
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 2.5,
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+              ),
+              itemCount: tables.length,
+              itemBuilder: (context, index) {
+                final table = tables[index];
+                final status = table['status'];
+
+                String iconPath = "assets/images/meja-available.png";
+                if (status == "BOOKED") {
+                  iconPath = "assets/images/meja-booked.png";
+                } else if (status == "CLEANING") iconPath = "assets/images/meja-cleaning.png";
+
+                return GestureDetector(
+                  onTap: () {
+                    showStatusDialog(
+                      context: context,
+                      table: table,
+                      tableNumber: index + 1,
+                      onUpdate: (newStatus) {
+                        updateTableStatus(table['table_id'], newStatus);
+                        Navigator.pop(context);
+                      },
+                    );
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                  );
-                },
-              ),
+                    padding: const EdgeInsets.all(20),
+                    child: Row(
+                      children: [
+                        Image.asset(iconPath, width: 40),
+                        const SizedBox(width: 10),
+                        Text(
+                          "Meja ${index + 1}",
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
 
-              const SizedBox(height: 25),
-              const Text(
-                "Order Masuk",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 10),
-              Column(
-                children: orderList.map((o) {
-                  return _orderListTile(
-                    "Meja ${o['table_number']}", // T_10 → Meja 10
-                    o['menu_list'], // Beef x1, Pasta x2
-                    o['order_status'], // cooking / waiting / ready
-                    statusColor(o['order_status']),
-                  );
-                }).toList(),
-              ),
-            ],
-          ),
+            const SizedBox(height: 25),
+
+            const Text(
+              "Order Masuk",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+
+            Column(
+              children: orderList.map((o) {
+                return _orderListTile(
+                  "Meja ${o['table_number']}",
+                  o['menu_list'],
+                  o['order_status'],
+                  statusColor(o['order_status']),
+                );
+              }).toList(),
+            ),
+          ],
         ),
       ),
     );
@@ -374,4 +335,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
   }
+
+  Widget _legend(Color c, String text) {
+  return Row(
+    children: [
+      Container(
+        width: 10,
+        height: 10,
+        decoration: BoxDecoration(
+          color: c,
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+      const SizedBox(width: 5),
+      Text(text),
+      const SizedBox(width: 10),
+    ],
+  );
+}
+
 }
