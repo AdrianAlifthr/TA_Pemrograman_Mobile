@@ -1,5 +1,6 @@
 class ApiConfig {
-  static const String baseUrl = "https://unconducted-ashli-nonconfidential.ngrok-free.dev/API_restaurant_app";
+  static const String baseUrl =
+      "https://unconducted-ashli-nonconfidential.ngrok-free.dev/API_restaurant_app";
 
   static String countTables = "$baseUrl/count_table_available.php";
   static String login = "$baseUrl/login.php";
@@ -14,4 +15,5 @@ class ApiConfig {
   static String createOrder = "$baseUrl/create_order.php";
   static String kitchenTaks = "$baseUrl/kitchen_taks.php";
   static String updateKitchen = "$baseUrl/update_kitchen_status.php";
+  static const updateOrderStatus = "$baseUrl/update_order_status.php";
 }

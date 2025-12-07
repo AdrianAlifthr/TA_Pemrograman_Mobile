@@ -370,7 +370,7 @@ class _WaiterOrderScreenState extends State<WaiterOrderScreen> {
           SnackBar(
             content: Center(
               child: Text(
-                '✅ Order meja $tableNumber berhasil dibuat',
+                'Order meja $tableNumber berhasil dibuat',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -395,7 +395,7 @@ class _WaiterOrderScreenState extends State<WaiterOrderScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                '❌ Pesanan gagal dibuat',
+                'Pesanan gagal dibuat',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 4),
