@@ -1,56 +1,59 @@
 <?php
-header("Content-Type: application/json");
-header("Access-Control-Allow-Origin: *");
+    header("Content-Type: application/json");
+    header("Access-Control-Allow-Origin: *");
 
-include "connection-pdo.php";
+    include "connection-pdo.php";
 
-try {
+    try {
 
-    $sql = "
-    SELECT 
-        kt.TASK_NUMBER,
-        kt.ORDER_ID,
-        kt.STATION,
-        kt.KITCHEN_STATUS,
-        kt.ESTIMATED_MIN,
-        kt.STARTED_AT,
+        $sql = "
+            SELECT 
+                kt.task_number,
+                kt.order_id,
+                kt.kitchen_status,
+                kt.started_at,
 
-        o.TABLE_ID,
-        o.ORDER_CREATED_DATE,
+                o.table_id,
+                o.order_created_date,
 
-        GROUP_CONCAT(
-            CONCAT(mc.MENU_NAME, ' x', oi.quantity)
-            SEPARATOR ', '
-        ) AS ITEMS
+                GROUP_CONCAT(
+                    CONCAT(mc.menu_name, ' x', oi.quantity)
+                    SEPARATOR ', '
+                ) AS items
 
-    FROM kitchen_tasks kt
+            FROM kitchen_tasks kt
 
-    JOIN orders o 
-        ON kt.ORDER_ID = o.ORDER_ID
+            JOIN orders o 
+                ON kt.order_id = o.order_id
 
-    JOIN order_items oi
-        ON o.ORDER_ID = oi.order_id
+            JOIN order_items oi
+                ON o.order_id = oi.order_id
 
-    JOIN menu_categories mc
-        ON oi.menu_item_id = mc.MENU_ID
+            JOIN menu_categories mc
+                ON oi.menu_item_id = mc.menu_id
 
-    GROUP BY kt.TASK_NUMBER
-    ORDER BY o.ORDER_CREATED_DATE ASC
-    ";
+            GROUP BY kt.task_number
 
-    $stmt = $conn->prepare($sql);
-    $stmt->execute();
+            ORDER BY o.order_created_date ASC
+        ";
 
-    $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $stmt = $conn->prepare($sql);
+        $stmt->execute();
 
-    echo json_encode([
-        "success" => true,
-        "data" => $data
-    ]);
+        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-} catch (Exception $e) {
-    echo json_encode([
-        "success" => false,
-        "error" => $e->getMessage()
-    ]);
-}
+        echo json_encode([
+            "success" => true,
+            "data" => $data
+        ]);
+
+    } catch (Exception $e) {
+
+        echo json_encode([
+            "success" => false,
+            "message" => "Gagal mengambil data kitchen tasks",
+            "error"   => $e->getMessage()
+        ]);
+
+    }
+?>

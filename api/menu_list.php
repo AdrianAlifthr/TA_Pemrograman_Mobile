@@ -1,43 +1,44 @@
 <?php
-header("Content-Type: application/json");
-header("Access-Control-Allow-Origin: *");
-include "connection-pdo.php";
+    header("Content-Type: application/json");
+    header("Access-Control-Allow-Origin: *");
+    include "connection-pdo.php";
 
-$category = $_GET["category"] ?? "";
-$search   = $_GET["search"] ?? "";
+    $category = $_GET["category"] ?? "";
+    $search   = $_GET["search"] ?? "";
 
-$sql = "
-SELECT 
-    menu_id,
-    menu_name,
-    category_id,
-    price,
-    available,
-    path
-FROM menu_categories
-WHERE 1=1
-";
+    $sql = "
+    SELECT 
+        menu_id,
+        menu_name,
+        category_id,
+        price,
+        available,
+        path
+    FROM menu_categories
+    WHERE 1=1
+    ";
 
-$params = [];
+    $params = [];
 
-if (!empty($category)) {
-    $sql .= " AND category_id = :category ";
-    $params[':category'] = $category;
-}
+    if (!empty($category)) {
+        $sql .= " AND category_id = :category ";
+        $params[':category'] = $category;
+    }
 
-if (!empty($search)) {
-    $sql .= " AND LOWER(menu_name) LIKE :search ";
-    $params[':search'] = "%" . strtolower($search) . "%";
-}
+    if (!empty($search)) {
+        $sql .= " AND LOWER(menu_name) LIKE :search ";
+        $params[':search'] = "%" . strtolower($search) . "%";
+    }
 
-$sql .= " ORDER BY menu_name ASC";
+    $sql .= " ORDER BY menu_name ASC";
 
-$stmt = $conn->prepare($sql);
-$stmt->execute($params);
+    $stmt = $conn->prepare($sql);
+    $stmt->execute($params);
 
-$data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-echo json_encode([
-    "success" => true,
-    "data" => $data
-]);
+    echo json_encode([
+        "success" => true,
+        "data" => $data
+    ]);
+?>
