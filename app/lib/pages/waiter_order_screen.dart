@@ -3,6 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_application_1/api_config.dart';
 import 'package:flutter_application_1/main.dart';
+import 'package:intl/intl.dart';
+
+final rupiah = NumberFormat.currency(
+  locale: 'id_ID',
+  symbol: 'Rp ',
+  decimalDigits: 0,
+);
 
 class MenuItemModel {
   final String id;
@@ -104,7 +111,7 @@ class _WaiterOrderScreenState extends State<WaiterOrderScreen> {
     if (!menu.available) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Menu not available')));
+      ).showSnackBar(const SnackBar(content: Text('Menu sedang kosong')));
       return;
     }
     setState(() {
@@ -159,7 +166,7 @@ class _WaiterOrderScreenState extends State<WaiterOrderScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 20),
                       TextField(
                         keyboardType: TextInputType.number,
                         decoration: const InputDecoration(
@@ -185,8 +192,17 @@ class _WaiterOrderScreenState extends State<WaiterOrderScreen> {
                           children: [
                             for (var e in cart.entries)
                               ListTile(
-                                title: Text(e.value.menu.name),
-                                subtitle: Text('Rp ${e.value.menu.price}'),
+                                title: Text(
+                                  e.value.menu.name,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  rupiah.format(e.value.menu.price),
+                                  style: TextStyle(fontWeight: FontWeight.w500),
+                                ),
                                 trailing: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
@@ -205,7 +221,10 @@ class _WaiterOrderScreenState extends State<WaiterOrderScreen> {
                                         setState(() {});
                                       },
                                     ),
-                                    Text('${e.value.qty}'),
+                                    Text(
+                                      '${e.value.qty}',
+                                      style: TextStyle(fontSize: 16),
+                                    ),
                                     IconButton(
                                       icon: const Icon(
                                         Icons.add_circle_outline,
@@ -223,7 +242,13 @@ class _WaiterOrderScreenState extends State<WaiterOrderScreen> {
                             const SizedBox(height: 10),
                             ListTile(
                               title: const Text('Total'),
-                              trailing: Text('Rp ${cartTotal()}'),
+                              trailing: Text(
+                                rupiah.format(cartTotal()),
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.blueAccent,
+                                ),
+                              ),
                             ),
                             const SizedBox(height: 10),
                             Text(
@@ -240,10 +265,14 @@ class _WaiterOrderScreenState extends State<WaiterOrderScreen> {
                                       Navigator.of(context).pop();
                                       createOrderAndPay(tableNumber, 'CASH');
                                     },
-                                    child: const Text(
-                                      'Cash',
-                                      style: TextStyle(
-                                        color: AppColors.accentGreen,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(10.0),
+                                      child: const Text(
+                                        'Cash',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.black,
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -256,10 +285,14 @@ class _WaiterOrderScreenState extends State<WaiterOrderScreen> {
                                       Navigator.of(context).pop();
                                       showQRISThenPlaceOrder(tableNumber);
                                     },
-                                    child: const Text(
-                                      'QRIS',
-                                      style: TextStyle(
-                                        color: AppColors.accentGreen,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(10.0),
+                                      child: const Text(
+                                        'QRIS',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.black,
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -362,10 +395,12 @@ class _WaiterOrderScreenState extends State<WaiterOrderScreen> {
       );
 
       final body = json.decode(res.body);
+      debugPrint(res.body);
 
       if (body['success'] == true) {
         setState(() => cart.clear());
 
+        // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Center(
@@ -543,48 +578,53 @@ class _WaiterOrderScreenState extends State<WaiterOrderScreen> {
                               ),
                               Padding(
                                 padding: const EdgeInsets.all(8.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      m.name,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Rp ${m.price}',
-                                      style: const TextStyle(
-                                        color: Colors.grey,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          m.available ? 'Available' : 'Empty',
-                                          style: TextStyle(
-                                            color: m.available
-                                                ? Colors.green
-                                                : Colors.red,
-                                          ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(4.0),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        m.name,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
                                         ),
-                                        CircleAvatar(
-                                          radius: 14,
-                                          backgroundColor: AppColors.primary,
-                                          child: const Icon(
-                                            Icons.add,
-                                            color: Colors.white,
-                                            size: 16,
-                                          ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        rupiah.format(m.price),
+                                        style: const TextStyle(
+                                          color: Colors.grey,
+                                          fontSize: 14,
                                         ),
-                                      ],
-                                    ),
-                                  ],
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            m.available ? 'Tersedia' : 'Kosong',
+                                            style: TextStyle(
+                                              color: m.available
+                                                  ? Colors.green
+                                                  : Colors.red,
+                                            ),
+                                          ),
+                                          CircleAvatar(
+                                            radius: 15,
+                                            backgroundColor: AppColors.primary,
+                                            child: const Icon(
+                                              Icons.add,
+                                              color: Colors.white,
+                                              size: 20,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ],
@@ -601,8 +641,8 @@ class _WaiterOrderScreenState extends State<WaiterOrderScreen> {
         backgroundColor: AppColors.primary,
         icon: const Icon(Icons.shopping_cart, color: AppColors.background),
         label: Text(
-          'Ringkasan (${cartCount()})',
-          style: TextStyle(color: AppColors.background),
+          'Pesanan (${cartCount()})',
+          style: TextStyle(color: AppColors.background, fontSize: 20),
         ),
       ),
     );
