@@ -342,47 +342,75 @@ class _DashboardScreenState extends State<DashboardScreen> {
       margin: const EdgeInsets.only(bottom: 10),
       elevation: 0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Column(
-        children: [
-          ListTile(
-            title: Text(
-              meja,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            subtitle: Text(menu),
-            trailing: Chip(
-              label: Text(
-                status.toUpperCase(),
-                style: const TextStyle(color: Colors.white),
+      child: Padding(
+        padding: const EdgeInsets.all(4.0),
+        child: Column(
+          children: [
+            ListTile(
+              title: Text(
+                meja,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-              backgroundColor: color,
-            ),
-          ),
 
-          if (isReady)
-            InkWell(
-              onTap: onServe,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
-                ),
-                child: Row(
-                  children: const [
-                    Text(
-                      "Sajikan",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green,
-                      ),
-                    ),
-                    Spacer(),
-                    Icon(Icons.check_circle, color: Colors.green),
-                  ],
+              subtitle: Padding(
+                padding: const EdgeInsets.only(top: 4.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: menu
+                      .split(',')
+                      .map(
+                        (m) => Padding(
+                          padding: const EdgeInsets.only(bottom: 2),
+                          child: Text(
+                            m.trim(),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ),
+                      )
+                      .toList(),
                 ),
               ),
+
+              trailing: Chip(
+                label: Text(
+                  status.toUpperCase(),
+                  style: const TextStyle(color: Colors.white),
+                ),
+                backgroundColor: color,
+              ),
             ),
-        ],
+
+            if (isReady)
+              InkWell(
+                onTap: onServe,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
+                  child: Row(
+                    children: const [
+                      Text(
+                        "Sajikan",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green,
+                        ),
+                      ),
+                      Spacer(),
+                      Icon(Icons.check_circle, color: Colors.green),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

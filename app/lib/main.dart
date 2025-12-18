@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/pages/chef_navigation.dart';
 import 'package:flutter_application_1/pages/login_page.dart';
 import 'package:flutter_application_1/pages/waiter_navigation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AppColors {
   static const Color background = Color(0xFFF4F4DC);
@@ -13,7 +14,9 @@ class AppColors {
   static const Color cardWhite = Colors.white;
 }
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   runApp(const MyApp());
 }
 

@@ -242,7 +242,7 @@ class _ChefMenuManagementScreenState extends State<ChefMenuManagementScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        menu.available ? "Available" : "Not Available",
+                        menu.available ? "Tersedia" : "Kosong",
                         style: TextStyle(
                           color: menu.available
                               ? Colors.green

@@ -1,207 +1,144 @@
 <?php
+    header("Content-Type: application/json");
+    header("Access-Control-Allow-Origin: *");
+    header("Access-Control-Allow-Headers: Content-Type");
 
-header("Content-Type: application/json");
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Headers: Content-Type");
+    include "connection-pdo.php";
 
-include "connection-pdo.php";
+    $raw   = file_get_contents("php://input");
+    $data  = json_decode($raw, true) ?? [];
 
-/**
- * -------------------------------------------------
- * INPUT JSON / FORM DATA
- * -------------------------------------------------
- */
-$raw   = file_get_contents("php://input");
-$data  = json_decode($raw, true) ?? [];
+    $table_id       = $data['table_id']        ?? ($_POST['table_id'] ?? '');
+    $items           = $data['items']          ?? ($_POST['items'] ?? []);
+    $payment_method  = $data['payment_method'] ?? ($_POST['payment_method'] ?? 'CASH');
 
-$table_id       = $data['table_id']       ?? ($_POST['table_id'] ?? '');
-$items           = $data['items']          ?? ($_POST['items'] ?? []);
-$payment_method  = $data['payment_method']?? ($_POST['payment_method'] ?? 'CASH');
+    if (is_string($items)) {
+        $items = json_decode($items, true);
+    }
+    if (!$table_id || !is_array($items) || count($items) == 0) {
+        echo json_encode([
+            "success" => false,
+            "message" => "Missing table_id or items"
+        ]);
+        exit;
+    }
+    preg_match('/(\d+)/', $table_id, $match);
+    $tableNum = $match[1] ?? null;
 
-if (is_string($items)) {
-    $items = json_decode($items, true);
-}
-
-/**
- * -------------------------------------------------
- * VALIDASI
- * -------------------------------------------------
- */
-if (!$table_id || !is_array($items) || count($items) == 0) {
-    echo json_encode([
-        "success"=>false,
-        "message"=>"Missing table_id or items"
-    ]);
-    exit;
-}
-
-/**
- * -------------------------------------------------
- * NORMALIZE TABLE ID
- * -------------------------------------------------
- * input:
- *  1        → T_1
- *  Meja 1   → T_1
- *  T_1      → T_1
- */
-preg_match('/(\d+)/', $table_id, $match);
-$tableNum = $match[1] ?? null;
-
-if (!$tableNum) {
-    echo json_encode([
-        "success" => false,
-        "message" => "Invalid table id"
-    ]);
-    exit;
-}
-
-$table_id = "T_" . $tableNum;
-
-/**
- * -------------------------------------------------
- * PROCESS ORDER
- * -------------------------------------------------
- */
-try {
-
-    $conn->beginTransaction();
-
-    /**
-     * ---------------------------------------------
-     * GET MENU PRICES
-     * ---------------------------------------------
-     */
-    $menuIds = array_map(fn($i)=>$i['menu_id'], $items);
-    $in = implode(',', array_fill(0,count($menuIds),'?'));
-
-    $sql = "SELECT MENU_ID, PRICE FROM menu_categories WHERE MENU_ID IN ($in)";
-    $stmt = $conn->prepare($sql);
-    $stmt->execute($menuIds);
-
-    $priceMap = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
-
-    if (!$priceMap) {
-        throw new Exception("Menu not found");
+    if (!$tableNum) {
+        echo json_encode([
+            "success" => false,
+            "message" => "Invalid table id"
+        ]);
+        exit;
     }
 
-    /**
-     * ---------------------------------------------
-     * CALCULATE TOTAL
-     * ---------------------------------------------
-     */
-    $total = 0;
+    $table_id = "T_" . $tableNum;
 
-    foreach ($items as $row){
-        $mid = $row['menu_id'];
-        $qty = intval($row['quantity']);
+    try {
 
-        $price = $priceMap[$mid] ?? 0;
+        $conn->beginTransaction();
+        $menuIds = array_map(fn ($i) => $i['menu_id'], $items);
+        $in = implode(',', array_fill(0, count($menuIds), '?'));
 
-        // parse "Rp420,000" → 420000
-        if (!is_numeric($price)) {
-            preg_match_all('/\d+/', $price, $m);
-            $price = intval(implode('', $m[0]));
+        $sql = "SELECT MENU_ID, PRICE FROM menu_categories WHERE MENU_ID IN ($in)";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute($menuIds);
+
+        $priceMap = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+
+        if (!$priceMap) {
+            throw new Exception("Menu not found");
         }
+        $total = 0;
 
-        $total += ($price * $qty);
-    }
+        foreach ($items as $row) {
+            $mid = $row['menu_id'];
+            $qty = intval($row['quantity']);
 
-    /**
-     * ---------------------------------------------
-     * INSERT ORDERS
-     * ---------------------------------------------
-     */
-    $orderId  = "O_" . uniqid();
-    $created  = date("Y-m-d H:i:s");
-    $status   = "waiting";
+            $price = $priceMap[$mid] ?? 0;
 
-    $sqlOrder = "
-        INSERT INTO orders
-        (ORDER_ID, TABLE_ID, ORDER_STATUS, ORDER_TOTAL_AMOUNT, ORDER_CREATED_DATE)
-        VALUES (:oid, :tid, :status, :total, :created)
-    ";
+            if (!is_numeric($price)) {
+                preg_match_all('/\d+/', $price, $m);
+                $price = intval(implode('', $m[0]));
+            }
 
-    $stmtOrder = $conn->prepare($sqlOrder);
-
-    $stmtOrder->execute([
-        ':oid'     => $orderId,
-        ':tid'     => $table_id,
-        ':status'  => $status,
-        ':total'   => $total,
-        ':created' => $created
-    ]);
-
-
-
-    /**
-     * ---------------------------------------------
-     * INSERT ORDER ITEMS (ANTI DUPLICATE)
-     * ---------------------------------------------
-     */
-    $sqlItem = "
-        INSERT INTO order_items
-        (ORDER_ITEMS_ID, order_id, menu_item_id, quantity, unit_price, status)
-        VALUES (:oiid,:oid,:mid,:qty,:price,:status)
-    ";
-
-    $stmtItem = $conn->prepare($sqlItem);
-
-    $counter = 1;
-
-    foreach ($items as $row){
-
-        $mid = $row['menu_id'];
-        $qty = intval($row['quantity']);
-
-        $unit = $priceMap[$mid];
-
-        if (!is_numeric($unit)) {
-            preg_match_all('/\d+/', $unit, $m);
-            $unit = intval(implode('', $m[0]));
+            $total += ($price * $qty);
         }
+        $orderId  = "O_" . uniqid();
 
-        // ✅ SAFE UNIQUE ITEM ID
-        $oi_id = "OI_{$orderId}_{$counter}";
-        $counter++;
+        $sqlOrder = "
+            INSERT INTO orders
+            (order_id, table_id, order_status, order_total_amount, order_created_date)
+            VALUES (:oid, :tid, 'waiting', :total, NOW())
+        ";
 
-        $stmtItem->execute([
-            ':oiid'=> $oi_id,
-            ':oid'=> $orderId,
-            ':mid'=> $mid,
-            ':qty'=> $qty,
-            ':price'=> $unit,
-            ':status'=> 'waiting'
+        $stmtOrder = $conn->prepare($sqlOrder);
+        $stmtOrder->execute([
+            ':oid'     => $orderId,
+            ':tid'     => $table_id,
+            ':total'   => $total,
+        ]);
+        $sqlItem = "
+            INSERT INTO order_items
+            (order_items_id, order_id, menu_item_id, quantity, unit_price, status)
+            VALUES (:oiid,:oid,:mid,:qty,:price,'waiting')
+        ";
+
+        $stmtItem = $conn->prepare($sqlItem);
+        $counter = 1;
+
+        foreach ($items as $row) {
+
+            $mid = $row['menu_id'];
+            $qty = intval($row['quantity']);
+
+            $unit = $priceMap[$mid];
+
+            if (!is_numeric($unit)) {
+                preg_match_all('/\d+/', $unit, $m);
+                $unit = intval(implode('', $m[0]));
+            }
+            $oi_id = "OI_{$orderId}_{$counter}";
+            $counter++;
+
+            $stmtItem->execute([
+                ':oiid' => $oi_id,
+                ':oid'  => $orderId,
+                ':mid'  => $mid,
+                ':qty'  => $qty,
+                ':price'=> $unit,
+            ]);
+        }
+        $sqlKitchen = "
+            INSERT INTO kitchen_tasks
+            (order_id, kitchen_status)
+            VALUES (:oid, 'waiting')
+        ";
+
+        $stmtKitchen = $conn->prepare($sqlKitchen);
+        $stmtKitchen->execute([
+            ':oid' => $orderId
+        ]);
+        $conn->commit();
+        echo json_encode([
+            "success"   => true,
+            "order_id" => $orderId,
+            "table"    => $table_id,
+            "total"    => $total,
+            "items"    => count($items),
+            "payment"  => $payment_method,
+            "message"  => "Order berhasil dikirim ke kitchen"
+        ]);
+
+    } catch (Exception $e) {
+
+        $conn->rollBack();
+
+        echo json_encode([
+            "success" => false,
+            "message" => "Gagal membuat order",
+            "error"   => $e->getMessage()
         ]);
     }
-
-    /**
-     * ---------------------------------------------
-     * COMMIT
-     * ---------------------------------------------
-     */
-    $conn->commit();
-
-    /**
-     * ---------------------------------------------
-     * SUCCESS RESPONSE
-     * ---------------------------------------------
-     */
-    echo json_encode([
-        "success" => true,
-        "order_id"=> $orderId,
-        "total"   => $total,
-        "payment" => $payment_method,
-        "items"   => count($items),
-        "table"   => $table_id
-    ]);
-
-} catch (Exception $e){
-
-    $conn->rollBack();
-
-    echo json_encode([
-        "success"=>false,
-        "error"=>$e->getMessage()
-    ]);
-
-}
+?>
